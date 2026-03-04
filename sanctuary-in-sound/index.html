@@ -13,8 +13,9 @@
 	}
 	#p5-wrapper {
 		height: 100%;
-		min-height: 200px;
+		min-height: 400px;
 		position: relative;
+		margin: 0 16pt;
 	}
 	#p5-pixel-map {
 		height: 100%;
@@ -24,6 +25,84 @@
 	}
 
 </style>
+
+<!-- CSS for the audio legend -->
+<style>
+    /* Parent container – can sit inside other divs */
+    .color-pad {
+      display: flex;
+      flex-wrap: nowrap;           /* Always one row */
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;                   /* Space between squares */
+      width: 100%;                 /* Fill whatever parent gives */
+      position: relative;
+      box-sizing: border-box;
+      padding: 1rem;
+    }
+
+    /* Base style for all squares */
+    .color-square {
+      padding: 1pt 12pt;
+      flex: 1 1 0;                 /* Grow to share available space */
+      min-width: 40px;            /* Minimum width so they don't get too tiny */
+      min-height: 40px;           /* Minimum height */
+      aspect-ratio: 1 / 1;         /* Keep them square */
+      border-radius: 8px;
+      border: 2px solid #333;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
+      font-weight: 600;
+      font-size: 1rem;
+      color: #111;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      transition: transform 0.1s ease, box-shadow 0.1s ease,
+        filter 0.1s ease;
+    }
+
+    .color-square:active {
+      transform: translateY(1px) scale(0.98);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+      filter: brightness(0.95);
+    }
+
+    /* Individual colors */
+    .square-red {
+      background-color: #c0392b;    /* Red */
+      color: #fdfdfd;
+    }
+
+    .square-tan {
+      background-color: #d2b48c;    /* Tan */
+      color: #222;
+    }
+
+    .square-dark-green {
+      background-color: #145a32;    /* Dark green */
+      color: #fdfdfd;
+    }
+
+    .square-light-green {
+      background-color: #58d68d;    /* Light green */
+      color: #111;
+    }
+
+    /* Optional: make text smaller on small screens */
+    @media (max-width: 480px) {
+      .color-square {
+        min-width: 20px;
+        min-height: 20px;
+        font-size: 0.85rem;
+      }
+    }
+  </style>
 <body>
 	<!-- Hero(extended) navbar -->
 	<div class="navbar navbar--extended">
@@ -75,9 +154,26 @@
 					<div class="hero__content__inner" id='navConverter'>
 						<a href="#p5-canvas-section" class="button button__accent" id="start-button">Start Audio</a>
 					</div>
+					<h3 >Auditory Legend</h3>
+					<!-- This entire block can sit inside any other divs/layouts -->
+					  <div class="color-pad">
+					  	<button class="color-square square-tan" type="button" data-sound="tan">
+					      Tan
+					    </button>
+					    <button class="color-square square-red" type="button" data-sound="red">
+					      Red
+					    </button>
+					    <button class="color-square square-dark-green" type="button" data-sound="darkGreen">
+					      Dark Green
+					    </button>
+					    <button class="color-square square-light-green" type="button" data-sound="lightGreen">
+					      Light Green
+					    </button>
+					  </div>
 				</div>
 				<div class="expanded__content" id="p5-wrapper">
 					<h2 class="expanded__title"></h2>
+					<!-- The P5js canvas -->
 					<div id="p5-pixel-map">
 					</div>
 				</div>
@@ -215,5 +311,64 @@
 	<script src="app.js"></script>
 	<!-- optional -->
 	<script type="text/javascript" src="guardrails.js"></script> 
+
+<!-- Audio Legend JS -->
+	<script>
+    // Map sound keys (from data-sound) to audio file paths
+    const soundFiles = {
+      red: "audio-legend/Habitat-Audio-Legend-Flat-Sand.mp3",
+      tan: "audio-legend/Habitat-Audio-Legend-Rippled-Sand.mp3",
+      darkGreen: "audio-legend/Habitat-Audio-Legend-Dense-Live-Bottom.mp3",
+      lightGreen: "audio-legend/Habitat-Audio-Legend-Sparse-Live-Bottom.mp3",
+    };
+
+    // Preload Audio objects
+    const sounds = {};
+    for (const [key, src] of Object.entries(soundFiles)) {
+      const audio = new Audio(src);
+      audio.preload = "auto";
+      sounds[key] = audio;
+    }
+
+    // Helper: stop any currently playing audio
+	function stopAllSounds() {
+	  Object.values(sounds).forEach((audio) => {
+	    audio.pause();
+	    audio.currentTime = 0;
+	  });
+	}
+
+    // Attach click handlers to all squares
+    const squares = document.querySelectorAll(".color-square");
+
+    squares.forEach((square) => {
+      square.addEventListener("click", () => {
+        const soundKey = square.dataset.sound;
+        const audio = sounds[soundKey];
+
+        if (!audio) return;
+
+        // Ensure only one sound plays at a time
+    	stopAllSounds();
+
+        // Restart the sound on each click
+        audio.currentTime = 0;
+        audio.play().catch((err) => {
+          // Optional: handle blocked autoplay or other errors
+          console.error("Audio play error:", err);
+        });
+      });
+    });
+
+    // Start button stops all audio
+	const startButton = document.querySelector("#start-button");
+
+	if (startButton) {
+	  startButton.addEventListener("click", () => {
+	    stopAllSounds();          // stop anything playing
+	    // add any other start-button behavior here
+	  });
+	}
+  </script>
 </body>
 </html>
